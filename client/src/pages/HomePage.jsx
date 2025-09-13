@@ -41,16 +41,24 @@ const HomePage = () => {
 
       setEnrolledCourses(coursesResponse.data || [])
 
-      // Mock user stats - in real app, this would come from API
+      // Use real user data from backend
       setUserStats({
-        totalPoints: user?.points || 1250,
-        level: user?.level || 5,
-        completedLessons: 23,
-        streak: 7,
-        rank: 42
+        totalPoints: user?.xp || 0,
+        level: user?.rank || 1,
+        completedLessons: 0, // This would need to be calculated from user lessons
+        streak: user?.strike || 0,
+        rank: 0 // This would need to be calculated from leaderboard
       })
     } catch (error) {
       console.error('Error fetching user data:', error)
+      // Fallback to user data if API fails
+      setUserStats({
+        totalPoints: user?.xp || 0,
+        level: user?.rank || 1,
+        completedLessons: 0,
+        streak: user?.strike || 0,
+        rank: 0
+      })
     } finally {
       setLoading(false)
     }

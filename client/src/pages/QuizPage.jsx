@@ -134,7 +134,9 @@ const QuizPage = () => {
         }
       ])
 
-      setTimeLeft(10 * 60) // 10 minutes in seconds
+      setQuiz(null)
+      setQuestions([])
+      setTimeLeft(0)
     } finally {
       setLoading(false)
     }

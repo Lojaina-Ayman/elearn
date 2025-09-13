@@ -3,6 +3,7 @@ require("dotenv").config();
 
 const express = require("express");
 const cookieparser = require("cookie-parser");
+const cors = require("cors");
 const app = express();
 const port = process.env.PORT;
 
@@ -17,6 +18,12 @@ const lessonRouter = require("../routes/lessons.route");
 const { checkUser } = require("../middleware/auth.middleware");
 const { checkAdmin } = require("../middleware/auth.middleware");
 // Middleware
+app.use(cors({
+  origin: 'http://localhost:5174', // Your frontend URL
+  credentials: true, // Allow cookies to be sent
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use(cookieparser());
 // Routes

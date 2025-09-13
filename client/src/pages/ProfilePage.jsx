@@ -80,21 +80,21 @@ const ProfilePage = () => {
 
       setUserSkills(skillsResponse.data || [])
 
-      // Mock user stats
+      // Use real user data from backend
       setUserStats({
-        totalPoints: user?.points || 1250,
-        level: user?.level || 5,
-        completedCourses: 3,
-        completedLessons: 23,
-        streak: 7,
-        joinDate: new Date('2024-01-15'),
+        totalPoints: user?.xp || 0,
+        level: user?.rank || 1,
+        completedCourses: 0, // This would need to be calculated from user courses
+        completedLessons: 0, // This would need to be calculated from user lessons
+        streak: user?.strike || 0,
+        joinDate: user?.created_at ? new Date(user.created_at) : new Date(),
         achievements: [
-          { id: 1, title: 'First Steps', description: 'Completed your first lesson', icon: '🎯', earned: true },
-          { id: 2, title: 'Quick Learner', description: 'Completed 5 lessons in one day', icon: '⚡', earned: true },
-          { id: 3, title: 'Consistent', description: 'Maintained a 7-day streak', icon: '🔥', earned: true },
-          { id: 4, title: 'Course Master', description: 'Completed your first course', icon: '🏆', earned: true },
+          { id: 1, title: 'First Steps', description: 'Completed your first lesson', icon: '🎯', earned: false },
+          { id: 2, title: 'Quick Learner', description: 'Completed 5 lessons in one day', icon: '⚡', earned: false },
+          { id: 3, title: 'Consistent', description: 'Maintained a 7-day streak', icon: '🔥', earned: (user?.strike || 0) >= 7 },
+          { id: 4, title: 'Course Master', description: 'Completed your first course', icon: '🏆', earned: false },
           { id: 5, title: 'Knowledge Seeker', description: 'Completed 10 courses', icon: '📚', earned: false },
-          { id: 6, title: 'Expert', description: 'Reached level 10', icon: '⭐', earned: false }
+          { id: 6, title: 'Expert', description: 'Reached level 10', icon: '⭐', earned: (user?.rank || 1) >= 10 }
         ]
       })
     } catch (error) {

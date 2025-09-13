@@ -47,19 +47,46 @@ const LeaderboardPage = () => {
   const fetchLeaderboardData = async () => {
     setLoading(true)
     try {
-      // In a real app, this would fetch from the API
-      // const response = await userAPI.getLeaderboard(activeTab, timeFilter)
+      // For now, we'll use a simple approach since there's no specific leaderboard API
+      // In a real implementation, you'd create a leaderboard endpoint in the backend
+      const response = await userAPI.getUsers()
+      const users = response.data || []
 
-      // Mock data for demonstration
-      const mockData = generateMockLeaderboard(activeTab)
-      setLeaderboardData(mockData)
+      // Sort users based on the active tab
+      const sortedUsers = users.sort((a, b) => {
+        switch (activeTab) {
+          case 'points': return (b.xp || 0) - (a.xp || 0)
+          case 'level': return (b.rank || 0) - (a.rank || 0)
+          case 'streak': return (b.strike || 0) - (a.strike || 0)
+          case 'courses': return 0 // Would need course completion data
+          default: return (b.xp || 0) - (a.xp || 0)
+        }
+      })
+
+      // Transform data for leaderboard display
+      const leaderboardData = sortedUsers.map((userData, index) => ({
+        id: userData.user_id,
+        fullname: userData.fullname,
+        username: userData.username,
+        avatar: userData.fullname?.charAt(0)?.toUpperCase() || 'U',
+        points: userData.xp || 0,
+        level: userData.rank || 1,
+        streak: userData.strike || 0,
+        courses: 0, // Would need to be calculated from user courses
+        change: 0, // Would need historical data
+        isCurrentUser: userData.user_id === user?.id
+      }))
+
+      setLeaderboardData(leaderboardData)
 
       // Find current user's rank
-      const currentUserRank = mockData.findIndex(item => item.id === user?.id) + 1
+      const currentUserRank = leaderboardData.findIndex(item => item.isCurrentUser) + 1
       setUserRank(currentUserRank > 0 ? currentUserRank : null)
 
     } catch (error) {
       console.error('Error fetching leaderboard:', error)
+      setLeaderboardData([])
+      setUserRank(null)
     } finally {
       setLoading(false)
     }

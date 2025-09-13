@@ -55,81 +55,10 @@ const CoursePage = () => {
 
     } catch (error) {
       console.error('Error fetching course data:', error)
-
-      // Mock data for demonstration
-      setCourse({
-        id: courseId,
-        title: 'React Fundamentals',
-        description: 'Learn the basics of React including components, state, and props. This comprehensive course will take you from beginner to intermediate level in React development.',
-        category: 'Frontend',
-        difficulty: 'Beginner',
-        duration: '8 hours',
-        students: 1250,
-        rating: 4.8,
-        price: 0,
-        instructor: 'John Doe',
-        thumbnail: '/api/placeholder/400/250'
-      })
-
-      setLessons([
-        {
-          id: '1',
-          title: 'Introduction to React',
-          content_documented: 'Learn what React is and why it\'s popular',
-          course_id: courseId,
-          xp: 50,
-          order: 1,
-          duration: '30 min',
-          type: 'video'
-        },
-        {
-          id: '2',
-          title: 'Setting up Development Environment',
-          content_documented: 'Install Node.js, npm, and create your first React app',
-          course_id: courseId,
-          xp: 75,
-          order: 2,
-          duration: '45 min',
-          type: 'video'
-        },
-        {
-          id: '3',
-          title: 'Understanding Components',
-          content_documented: 'Learn about functional and class components',
-          course_id: courseId,
-          xp: 100,
-          order: 3,
-          duration: '60 min',
-          type: 'video'
-        },
-        {
-          id: '4',
-          title: 'Props and State',
-          content_documented: 'Master the concepts of props and state management',
-          course_id: courseId,
-          xp: 125,
-          order: 4,
-          duration: '75 min',
-          type: 'video'
-        },
-        {
-          id: '5',
-          title: 'Event Handling',
-          content_documented: 'Learn how to handle user interactions in React',
-          course_id: courseId,
-          xp: 100,
-          order: 5,
-          duration: '50 min',
-          type: 'video'
-        }
-      ])
-
-      setUserLessons([
-        { lesson_id: '1', completed: true },
-        { lesson_id: '2', completed: true }
-      ])
-
-      setIsEnrolled(true)
+      setCourse(null)
+      setLessons([])
+      setUserLessons([])
+      setIsEnrolled(false)
     } finally {
       setLoading(false)
     }

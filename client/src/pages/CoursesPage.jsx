@@ -44,90 +44,23 @@ const CoursesPage = () => {
   const fetchCourses = async () => {
     try {
       const response = await courseAPI.getCourses()
-      setCourses(response.data || [])
+      console.log('API Response:', response)
+      console.log('Response data:', response.data)
+      console.log('Type of response.data:', typeof response.data)
+      console.log('Is array:', Array.isArray(response.data))
+
+      // Ensure we always set an array
+      if (Array.isArray(response.data)) {
+        setCourses(response.data)
+      } else if (response.data && Array.isArray(response.data.courses)) {
+        setCourses(response.data.courses)
+      } else {
+        console.warn('API did not return an array, setting empty array')
+        setCourses([])
+      }
     } catch (error) {
       console.error('Error fetching courses:', error)
-      // Mock data for demonstration
-      setCourses([
-        {
-          id: '1',
-          title: 'React Fundamentals',
-          description: 'Learn the basics of React including components, state, and props',
-          category: 'Frontend',
-          difficulty: 'Beginner',
-          duration: '8 hours',
-          lessons: 12,
-          students: 1250,
-          rating: 4.8,
-          price: 0,
-          thumbnail: '/api/placeholder/300/200'
-        },
-        {
-          id: '2',
-          title: 'Advanced JavaScript',
-          description: 'Master advanced JavaScript concepts and ES6+ features',
-          category: 'Frontend',
-          difficulty: 'Advanced',
-          duration: '15 hours',
-          lessons: 20,
-          students: 890,
-          rating: 4.9,
-          price: 100,
-          thumbnail: '/api/placeholder/300/200'
-        },
-        {
-          id: '3',
-          title: 'Node.js Backend Development',
-          description: 'Build scalable backend applications with Node.js and Express',
-          category: 'Backend',
-          difficulty: 'Intermediate',
-          duration: '12 hours',
-          lessons: 16,
-          students: 750,
-          rating: 4.7,
-          price: 150,
-          thumbnail: '/api/placeholder/300/200'
-        },
-        {
-          id: '4',
-          title: 'Python for Data Science',
-          description: 'Learn Python programming for data analysis and machine learning',
-          category: 'Data Science',
-          difficulty: 'Beginner',
-          duration: '20 hours',
-          lessons: 25,
-          students: 2100,
-          rating: 4.6,
-          price: 200,
-          thumbnail: '/api/placeholder/300/200'
-        },
-        {
-          id: '5',
-          title: 'React Native Mobile Apps',
-          description: 'Build cross-platform mobile applications with React Native',
-          category: 'Mobile',
-          difficulty: 'Intermediate',
-          duration: '18 hours',
-          lessons: 22,
-          students: 650,
-          rating: 4.5,
-          price: 180,
-          thumbnail: '/api/placeholder/300/200'
-        },
-        {
-          id: '6',
-          title: 'Docker & Kubernetes',
-          description: 'Master containerization and orchestration with Docker and Kubernetes',
-          category: 'DevOps',
-          difficulty: 'Advanced',
-          duration: '14 hours',
-          lessons: 18,
-          students: 420,
-          rating: 4.8,
-          price: 250,
-          thumbnail: '/api/placeholder/300/200'
-        }
-      ])
+      setCourses([])
     } finally {
       setLoading(false)
     }
@@ -139,8 +72,7 @@ const CoursesPage = () => {
       setEnrolledCourses(response.data || [])
     } catch (error) {
       console.error('Error fetching enrolled courses:', error)
-      // Mock enrolled courses
-      setEnrolledCourses([{ id: '1' }, { id: '3' }])
+      setEnrolledCourses([])
     }
   }
 
@@ -157,9 +89,16 @@ const CoursesPage = () => {
     return enrolledCourses.some(course => course.id === courseId)
   }
 
-  const filteredCourses = courses.filter(course => {
-    const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         course.description.toLowerCase().includes(searchTerm.toLowerCase())
+  // Ensure courses is always an array before filtering
+  const coursesArray = Array.isArray(courses) ? courses : []
+  console.log('Courses for filtering:', coursesArray)
+  console.log('Type of courses:', typeof courses)
+  console.log('Is courses an array:', Array.isArray(courses))
+
+  const filteredCourses = coursesArray.filter(course => {
+    if (!course) return false
+    const matchesSearch = course.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         course.description?.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesCategory = selectedCategory === 'all' || course.category === selectedCategory
     return matchesSearch && matchesCategory
   })

@@ -154,24 +154,7 @@ const LoginPage = () => {
           </div>
         </div>
 
-        {/* Demo Accounts */}
-        <div className="bg-blue-50 rounded-lg border border-blue-200 p-4">
-          <h3 className="text-sm font-semibold text-blue-900 mb-2">🚀 Demo Accounts (For Testing)</h3>
-          <div className="space-y-2 text-xs text-blue-800">
-            <div className="flex justify-between">
-              <span><strong>Student:</strong> demo@learnhub.com</span>
-              <span><strong>Password:</strong> demo123</span>
-            </div>
-            <div className="flex justify-between">
-              <span><strong>Advanced:</strong> sarah@learnhub.com</span>
-              <span><strong>Password:</strong> sarah123</span>
-            </div>
-            <div className="flex justify-between">
-              <span><strong>Admin:</strong> admin@learnhub.com</span>
-              <span><strong>Password:</strong> admin123</span>
-            </div>
-          </div>
-        </div>
+
 
         {/* Footer */}
         <div className="text-center text-sm text-gray-500">

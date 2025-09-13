@@ -65,65 +65,10 @@ const LessonPage = () => {
     } catch (error) {
       console.error('Error fetching lesson data:', error)
 
-      // Mock data for demonstration
-      setLesson({
-        id: lessonId,
-        title: 'Introduction to React',
-        content_documented: `
-# Introduction to React
-
-React is a popular JavaScript library for building user interfaces, particularly web applications. It was developed by Facebook and is now maintained by Facebook and the community.
-
-## What is React?
-
-React is a **declarative**, **efficient**, and **flexible** JavaScript library for building user interfaces. It lets you compose complex UIs from small and isolated pieces of code called "components."
-
-### Key Features:
-
-1. **Component-Based**: Build encapsulated components that manage their own state
-2. **Declarative**: React makes it painless to create interactive UIs
-3. **Learn Once, Write Anywhere**: You can develop new features without rewriting existing code
-
-## Why Use React?
-
-- **Virtual DOM**: React uses a virtual DOM which makes it faster
-- **Reusable Components**: Write once, use everywhere
-- **Strong Community**: Large ecosystem and community support
-- **Backed by Facebook**: Continuous development and support
-
-## Getting Started
-
-To start with React, you need to understand:
-
-- JavaScript ES6+ features
-- HTML and CSS
-- Basic understanding of DOM manipulation
-
-Let's dive deeper into these concepts in the upcoming lessons!
-        `,
-        course_id: courseId,
-        xp: 50,
-        order: 1,
-        duration: '30 min',
-        type: 'video',
-        video_url: 'https://example.com/video.mp4'
-      })
-
-      setCourse({
-        id: courseId,
-        title: 'React Fundamentals',
-        description: 'Learn the basics of React'
-      })
-
-      setAllLessons([
-        { id: '1', title: 'Introduction to React', order: 1 },
-        { id: '2', title: 'Setting up Development Environment', order: 2 },
-        { id: '3', title: 'Understanding Components', order: 3 },
-        { id: '4', title: 'Props and State', order: 4 },
-        { id: '5', title: 'Event Handling', order: 5 }
-      ])
-
-      setUserLesson({ lesson_id: lessonId, completed: false })
+      setLesson(null)
+      setCourse(null)
+      setAllLessons([])
+      setUserLesson(null)
     } finally {
       setLoading(false)
     }

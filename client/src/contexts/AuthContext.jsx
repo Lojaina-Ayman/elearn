@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { authAPI } from '../services/api'
-import { getMockUser } from '../data/mockData'
 
 const AuthContext = createContext()
 
@@ -19,17 +18,15 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     // Check if user is logged in on app start
-    const token = localStorage.getItem('token')
     const userData = localStorage.getItem('user')
 
-    if (token && userData) {
+    if (userData) {
       try {
         const parsedUser = JSON.parse(userData)
         setUser(parsedUser)
         setIsAuthenticated(true)
       } catch (error) {
         console.error('Error parsing user data:', error)
-        localStorage.removeItem('token')
         localStorage.removeItem('user')
       }
     }
@@ -38,15 +35,12 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      // Mock authentication for demo purposes
-      const matchedUser = getMockUser(email, password)
+      const response = await authAPI.signin({ email, password })
 
-      if (matchedUser) {
-        // Remove password from user data
-        const { password: _, ...userData } = matchedUser
-        const mockToken = `mock-jwt-token-${userData.id}-${Date.now()}`
+      if (response.data.success) {
+        const userData = response.data.user
 
-        localStorage.setItem('token', mockToken)
+        // Store user data in localStorage (JWT is stored in httpOnly cookie by backend)
         localStorage.setItem('user', JSON.stringify(userData))
 
         setUser(userData)
@@ -56,47 +50,43 @@ export const AuthProvider = ({ children }) => {
       } else {
         return { 
           success: false, 
-          error: 'Invalid email or password. Try demo@learnhub.com / demo123' 
+          error: response.data.message || 'Login failed' 
         }
       }
     } catch (error) {
       console.error('Login error:', error)
       return { 
         success: false, 
-        error: 'Login failed. Please try again.' 
+        error: error.response?.data?.message || 'Login failed. Please try again.' 
       }
     }
   }
 
   const signup = async (userData) => {
     try {
-      // Mock signup for demo purposes
-      const newUser = {
-        id: `demo-user-${Date.now()}`,
-        email: userData.email,
-        fullname: userData.fullname,
-        username: userData.username,
-        points: 0,
-        level: 1,
-        role: 'student',
-        bio: '',
-        joinDate: new Date().toISOString().split('T')[0]
+      const response = await authAPI.signup(userData)
+
+      if (response.data.success) {
+        const newUser = response.data.user
+
+        // Store user data in localStorage (JWT is stored in httpOnly cookie by backend)
+        localStorage.setItem('user', JSON.stringify(newUser))
+
+        setUser(newUser)
+        setIsAuthenticated(true)
+
+        return { success: true }
+      } else {
+        return { 
+          success: false, 
+          error: response.data.message || 'Signup failed' 
+        }
       }
-
-      const mockToken = `mock-jwt-token-${newUser.id}-${Date.now()}`
-
-      localStorage.setItem('token', mockToken)
-      localStorage.setItem('user', JSON.stringify(newUser))
-
-      setUser(newUser)
-      setIsAuthenticated(true)
-
-      return { success: true }
     } catch (error) {
       console.error('Signup error:', error)
       return { 
         success: false, 
-        error: 'Signup failed. Please try again.' 
+        error: error.response?.data?.message || 'Signup failed. Please try again.' 
       }
     }
   }
@@ -107,7 +97,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Logout error:', error)
     } finally {
-      localStorage.removeItem('token')
+      // Remove user data from localStorage (JWT cookie is cleared by backend)
       localStorage.removeItem('user')
       setUser(null)
       setIsAuthenticated(false)

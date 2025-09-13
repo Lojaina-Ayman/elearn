@@ -67,11 +67,11 @@ const Navbar = () => {
             <div className="flex items-center space-x-4 text-sm">
               <div className="flex items-center space-x-1 text-warning-600">
                 <Coins className="h-4 w-4" />
-                <span className="font-medium">{user?.points || 0}</span>
+                <span className="font-medium">{user?.xp || 0}</span>
               </div>
               <div className="flex items-center space-x-1 text-primary-600">
                 <Star className="h-4 w-4" />
-                <span className="font-medium">Level {user?.level || 1}</span>
+                <span className="font-medium">Level {user?.rank || 1}</span>
               </div>
             </div>
 
@@ -128,11 +128,11 @@ const Navbar = () => {
               <div className="flex justify-around py-2 border-b border-gray-200">
                 <div className="flex items-center space-x-1 text-warning-600">
                   <Coins className="h-4 w-4" />
-                  <span className="text-sm font-medium">{user?.points || 0} Points</span>
+                  <span className="text-sm font-medium">{user?.xp || 0} XP</span>
                 </div>
                 <div className="flex items-center space-x-1 text-primary-600">
                   <Star className="h-4 w-4" />
-                  <span className="text-sm font-medium">Level {user?.level || 1}</span>
+                  <span className="text-sm font-medium">Level {user?.rank || 1}</span>
                 </div>
               </div>
 
