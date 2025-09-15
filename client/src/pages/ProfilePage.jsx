@@ -21,11 +21,12 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 const ProfilePage = () => {
   const { user, updateUser } = useAuth()
   const [editing, setEditing] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('profile')
   const [formData, setFormData] = useState({
     fullname: '',
@@ -61,6 +62,7 @@ const ProfilePage = () => {
   })
 
   useEffect(() => {
+    // Only fetch data if a user is logged in
     if (user) {
       setFormData({
         fullname: user.fullname || '',
@@ -69,6 +71,8 @@ const ProfilePage = () => {
         bio: user.bio || ''
       })
       fetchUserData()
+    } else {
+      setLoading(false)
     }
   }, [user])
 
@@ -99,6 +103,8 @@ const ProfilePage = () => {
       })
     } catch (error) {
       console.error('Error fetching user data:', error)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -172,6 +178,16 @@ const ProfilePage = () => {
     { id: 'achievements', label: 'Achievements', icon: Award },
     { id: 'settings', label: 'Settings', icon: Settings }
   ]
+
+  // Conditional rendering for unauthenticated users
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <h2 className="text-lg font-bold mb-2">Please log in to view your profile.</h2>
+        <Link to="/login" className="btn btn-primary">Login</Link>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

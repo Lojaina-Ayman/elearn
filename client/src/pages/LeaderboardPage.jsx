@@ -9,17 +9,16 @@ import {
   Coins, 
   TrendingUp, 
   Calendar,
-  Filter,
   Search,
-  Award,
-  Target,
   Flame,
   Users
 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 const LeaderboardPage = () => {
   const { user } = useAuth()
-  const [leaderboardData, setLeaderboardData] = useState([])
+  const [allUsers, setAllUsers] = useState([]) // Stores the full, unsorted list of users
+  const [leaderboardData, setLeaderboardData] = useState([]) // Stores the filtered and sorted data for display
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('points')
   const [timeFilter, setTimeFilter] = useState('all')
@@ -40,93 +39,72 @@ const LeaderboardPage = () => {
     { value: 'today', label: 'Today' }
   ]
 
+  // Fetch all users only once when the user object changes (e.g., on login)
   useEffect(() => {
-    fetchLeaderboardData()
-  }, [activeTab, timeFilter])
-
-  const fetchLeaderboardData = async () => {
-    setLoading(true)
-    try {
-      // For now, we'll use a simple approach since there's no specific leaderboard API
-      // In a real implementation, you'd create a leaderboard endpoint in the backend
-      const response = await userAPI.getUsers()
-      const users = response.data || []
-
-      // Sort users based on the active tab
-      const sortedUsers = users.sort((a, b) => {
-        switch (activeTab) {
-          case 'points': return (b.xp || 0) - (a.xp || 0)
-          case 'level': return (b.rank || 0) - (a.rank || 0)
-          case 'streak': return (b.strike || 0) - (a.strike || 0)
-          case 'courses': return 0 // Would need course completion data
-          default: return (b.xp || 0) - (a.xp || 0)
-        }
-      })
-
-      // Transform data for leaderboard display
-      const leaderboardData = sortedUsers.map((userData, index) => ({
-        id: userData.user_id,
-        fullname: userData.fullname,
-        username: userData.username,
-        avatar: userData.fullname?.charAt(0)?.toUpperCase() || 'U',
-        points: userData.xp || 0,
-        level: userData.rank || 1,
-        streak: userData.strike || 0,
-        courses: 0, // Would need to be calculated from user courses
-        change: 0, // Would need historical data
-        isCurrentUser: userData.user_id === user?.id
-      }))
-
-      setLeaderboardData(leaderboardData)
-
-      // Find current user's rank
-      const currentUserRank = leaderboardData.findIndex(item => item.isCurrentUser) + 1
-      setUserRank(currentUserRank > 0 ? currentUserRank : null)
-
-    } catch (error) {
-      console.error('Error fetching leaderboard:', error)
-      setLeaderboardData([])
-      setUserRank(null)
-    } finally {
-      setLoading(false)
+    const fetchAllUsers = async () => {
+      setLoading(true);
+      try {
+        const response = await userAPI.getUsers();
+        const users = response.data.users || [];
+        setAllUsers(users);
+      } catch (error) {
+        console.error('Error fetching all users:', error);
+        setAllUsers([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (user) {
+      fetchAllUsers();
     }
-  }
+  }, [user]);
 
-  const generateMockLeaderboard = (type) => {
-    const names = [
-      'Alex Johnson', 'Sarah Chen', 'Mike Rodriguez', 'Emma Wilson', 'David Kim',
-      'Lisa Thompson', 'James Brown', 'Maria Garcia', 'Chris Lee', 'Anna Davis',
-      'Tom Wilson', 'Jessica Miller', 'Ryan Taylor', 'Sophie Anderson', 'Mark Johnson',
-      'Rachel Green', 'Kevin Zhang', 'Amy Liu', 'Daniel Smith', 'Grace Wang'
-    ]
+  // Update leaderboard display data whenever filters or sorting criteria change
+  useEffect(() => {
+    let sortedAndFilteredUsers = [...allUsers];
 
-    const avatars = ['👨‍💻', '👩‍💻', '👨‍🎓', '👩‍🎓', '👨‍🔬', '👩‍🔬', '👨‍🎨', '👩‍🎨']
-
-    return names.map((name, index) => {
-      const basePoints = Math.max(2000 - (index * 100) + Math.random() * 200, 100)
-
-      return {
-        id: index === 0 ? user?.id : `user-${index}`,
-        fullname: index === 0 ? user?.fullname || name : name,
-        username: index === 0 ? user?.username || name.toLowerCase().replace(' ', '') : name.toLowerCase().replace(' ', ''),
-        avatar: avatars[index % avatars.length],
-        points: type === 'points' ? Math.round(basePoints) : Math.round(basePoints * 0.8),
-        level: type === 'level' ? Math.max(Math.floor(basePoints / 200), 1) : Math.max(Math.floor(basePoints / 250), 1),
-        streak: type === 'streak' ? Math.max(Math.floor(basePoints / 100), 1) : Math.max(Math.floor(basePoints / 150), 1),
-        courses: type === 'courses' ? Math.max(Math.floor(basePoints / 300), 1) : Math.max(Math.floor(basePoints / 400), 1),
-        change: Math.floor(Math.random() * 10) - 5, // -5 to +5 change
-        isCurrentUser: index === 0
+    // Apply filtering based on search term
+    if (searchTerm) {
+      sortedAndFilteredUsers = sortedAndFilteredUsers.filter(u =>
+        u.fullname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        u.username?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    // Apply sorting based on active tab
+    sortedAndFilteredUsers.sort((a, b) => {
+      switch (activeTab) {
+        case 'points': return (b.xp || 0) - (a.xp || 0);
+        case 'level': return (b.rank || 0) - (a.rank || 0);
+        case 'streak': return (b.strike || 0) - (a.strike || 0);
+        case 'courses': return 0; // Requires course completion data from backend
+        default: return (b.xp || 0) - (a.xp || 0);
       }
-    }).sort((a, b) => {
-      switch (type) {
-        case 'points': return b.points - a.points
-        case 'level': return b.level - a.level
-        case 'streak': return b.streak - a.streak
-        case 'courses': return b.courses - a.courses
-        default: return b.points - a.points
-      }
-    })
-  }
+    });
+
+    // Apply time filter logic here if data supports it
+    // Note: this part currently has mock data and needs a backend implementation to be fully functional
+
+    // Map to a new structure for the leaderboard display
+    const formattedData = sortedAndFilteredUsers.map((userData) => ({
+      id: userData.user_id,
+      fullname: userData.fullname,
+      username: userData.username,
+      avatar: userData.fullname?.charAt(0)?.toUpperCase() || 'U',
+      points: userData.xp || 0,
+      level: userData.rank || 1,
+      streak: userData.strike || 0,
+      courses: 0, // Mock value
+      change: 0, // Mock value
+      isCurrentUser: userData.user_id === user?.user_id
+    }));
+    
+    setLeaderboardData(formattedData);
+    
+    const currentUserRank = formattedData.findIndex(item => item.isCurrentUser) + 1;
+    setUserRank(currentUserRank > 0 ? currentUserRank : null);
+
+  }, [allUsers, activeTab, timeFilter, searchTerm, user]);
 
   const getRankIcon = (rank) => {
     switch (rank) {
@@ -134,15 +112,6 @@ const LeaderboardPage = () => {
       case 2: return <Medal className="h-6 w-6 text-gray-400" />
       case 3: return <Medal className="h-6 w-6 text-amber-600" />
       default: return <span className="text-lg font-bold text-gray-600">#{rank}</span>
-    }
-  }
-
-  const getRankBadge = (rank) => {
-    switch (rank) {
-      case 1: return 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-white'
-      case 2: return 'bg-gradient-to-r from-gray-300 to-gray-500 text-white'
-      case 3: return 'bg-gradient-to-r from-amber-400 to-amber-600 text-white'
-      default: return 'bg-white border border-gray-200 text-gray-700'
     }
   }
 
@@ -166,10 +135,15 @@ const LeaderboardPage = () => {
     }
   }
 
-  const filteredData = leaderboardData.filter(item =>
-    item.fullname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.username.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  // Conditional rendering for unauthenticated users
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <h2 className="text-lg font-bold mb-2">Please log in to view the leaderboard.</h2>
+        <Link to="/login" className="btn btn-primary">Login</Link>
+      </div>
+    )
+  }
 
   if (loading) {
     return (
@@ -205,7 +179,7 @@ const LeaderboardPage = () => {
               </div>
               <div className="text-right">
                 <div className="text-3xl font-bold">#{userRank}</div>
-                <div className="text-primary-100">out of {leaderboardData.length}</div>
+                <div className="text-primary-100">out of {allUsers.length}</div>
               </div>
             </div>
           </div>
@@ -263,7 +237,7 @@ const LeaderboardPage = () => {
 
         {/* Top 3 Podium */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {filteredData.slice(0, 3).map((item, index) => {
+          {leaderboardData.slice(0, 3).map((item, index) => {
             const rank = index + 1
             return (
               <div
@@ -321,7 +295,7 @@ const LeaderboardPage = () => {
           </div>
 
           <div className="divide-y divide-gray-200">
-            {filteredData.slice(3).map((item, index) => {
+            {leaderboardData.slice(3).map((item, index) => {
               const rank = index + 4
               return (
                 <div
@@ -381,7 +355,7 @@ const LeaderboardPage = () => {
             })}
           </div>
 
-          {filteredData.length === 0 && (
+          {leaderboardData.length === 0 && (
             <div className="text-center py-12">
               <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No users found</h3>
@@ -396,25 +370,25 @@ const LeaderboardPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="text-center">
               <div className="text-2xl font-bold text-primary-600 mb-1">
-                {leaderboardData.length}
+                {allUsers.length}
               </div>
               <div className="text-gray-600">Total Learners</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-warning-600 mb-1">
-                {leaderboardData.reduce((sum, item) => sum + item.points, 0).toLocaleString()}
+                {allUsers.reduce((sum, item) => sum + (item.xp || 0), 0).toLocaleString()}
               </div>
               <div className="text-gray-600">Total Points</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-success-600 mb-1">
-                {Math.max(...leaderboardData.map(item => item.level))}
+                {allUsers.length > 0 ? Math.max(...allUsers.map(item => item.rank)) : 0}
               </div>
               <div className="text-gray-600">Highest Level</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-orange-600 mb-1">
-                {Math.max(...leaderboardData.map(item => item.streak))}
+                {allUsers.length > 0 ? Math.max(...allUsers.map(item => item.strike)) : 0}
               </div>
               <div className="text-gray-600">Longest Streak</div>
             </div>

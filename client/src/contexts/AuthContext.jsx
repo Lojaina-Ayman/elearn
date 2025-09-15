@@ -16,21 +16,40 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
-  useEffect(() => {
-    // Check if user is logged in on app start
-    const userData = localStorage.getItem('user')
-
-    if (userData) {
-      try {
-        const parsedUser = JSON.parse(userData)
-        setUser(parsedUser)
+  // Function to check auth status with the backend
+  const checkAuthStatus = async () => {
+    setLoading(true)
+    try {
+      // In a real app, you would have a GET endpoint to verify the JWT cookie
+      // For now, we simulate this by trying to fetch user data
+      const response = await userAPI.getUserById(localStorage.getItem('userId'))
+      if (response.data.success) {
+        setUser(response.data.user)
         setIsAuthenticated(true)
-      } catch (error) {
-        console.error('Error parsing user data:', error)
-        localStorage.removeItem('user')
+      } else {
+        throw new Error('Auth check failed')
       }
+    } catch (error) {
+      console.error('Auth check error:', error)
+      localStorage.removeItem('user')
+      localStorage.removeItem('userId')
+      setUser(null)
+      setIsAuthenticated(false)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
+  }
+
+  useEffect(() => {
+    // Check for user on app start, but also verify with the backend
+    const userData = localStorage.getItem('user')
+    const userId = localStorage.getItem('userId')
+
+    if (userData && userId) {
+      checkAuthStatus()
+    } else {
+      setLoading(false)
+    }
   }, [])
 
   const login = async (email, password) => {
@@ -39,10 +58,8 @@ export const AuthProvider = ({ children }) => {
 
       if (response.data.success) {
         const userData = response.data.user
-        // If backend returns a token, store it
-        if (response.data.token) {
-          localStorage.setItem('token', response.data.token)
-        }
+        // Store user ID and data in localStorage for persistence
+        localStorage.setItem('userId', userData.user_id)
         localStorage.setItem('user', JSON.stringify(userData))
 
         setUser(userData)
@@ -70,9 +87,7 @@ export const AuthProvider = ({ children }) => {
 
       if (response.data.success) {
         const newUser = response.data.user
-        if (response.data.token) {
-          localStorage.setItem('token', response.data.token)
-        }
+        localStorage.setItem('userId', newUser.user_id)
         localStorage.setItem('user', JSON.stringify(newUser))
 
         setUser(newUser)
@@ -100,7 +115,8 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Logout error:', error)
     } finally {
-      // Remove user data from localStorage (JWT cookie is cleared by backend)
+      // Remove user data from localStorage and reset state
+      localStorage.removeItem('userId')
       localStorage.removeItem('user')
       setUser(null)
       setIsAuthenticated(false)
