@@ -14,7 +14,7 @@ import {
   Award
 } from 'lucide-react'
 
-const QuizPage = () => {
+function QuizPage({ quizId, userPoints, setUserPoints }) {
   const { courseId, lessonId } = useParams()
   const navigate = useNavigate()
   const [quiz, setQuiz] = useState(null)
@@ -27,6 +27,9 @@ const QuizPage = () => {
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [completed, setCompleted] = useState(false)
+  const [quizzes, setQuizzes] = useState([])
+  const [completedQuizzes, setCompletedQuizzes] = useState([])
 
   useEffect(() => {
     fetchQuizData()
@@ -47,6 +50,18 @@ const QuizPage = () => {
     }
     return () => clearInterval(timer)
   }, [quizStarted, timeLeft, quizCompleted])
+
+  useEffect(() => {
+    fetch(`https://mrpingu-production.up.railway.app/quiz?course_id=${courseId}`)
+      .then(res => res.json())
+      .then(setQuizzes)
+      .catch(console.error);
+
+    fetch('https://mrpingu-production.up.railway.app/user/quizAttempts')
+      .then(res => res.json())
+      .then(setCompletedQuizzes)
+      .catch(console.error);
+  }, [courseId]);
 
   const fetchQuizData = async () => {
     try {
@@ -214,6 +229,24 @@ const QuizPage = () => {
     setResults(null)
     setTimeLeft(quiz.time_limit * 60)
     setQuizStarted(true)
+  }
+
+  const completeQuiz = (quizId, xp) => {
+    fetch(`https://mrpingu-production.up.railway.app/user/quizAttempts/${quizId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ score: 100 }) // Example score
+    })
+      .then(res => res.json())
+      .then(() => {
+        setCompletedQuizzes(prev => [...prev, { id: quizId }]);
+        // Add points logic here, e.g. update user points state
+      })
+      .catch(console.error);
+  }
+
+  const isCompleted = (quizId) => {
+    return Array.isArray(completedQuizzes) && completedQuizzes.some(q => q.id === quizId);
   }
 
   const formatTime = (seconds) => {
@@ -545,6 +578,24 @@ const QuizPage = () => {
             </div>
           </div>
         </div>
+
+        {/* Complete Quiz Button */}
+        {!completed ? (
+          <div className="mt-8 text-center">
+            <button
+              onClick={completeQuiz}
+              className="btn btn-primary text-lg px-8 py-3"
+            >
+              Complete Quiz
+            </button>
+          </div>
+        ) : (
+          <div className="mt-8 text-center">
+            <span className="text-lg font-semibold text-gray-900">
+              Quiz Completed! Points awarded.
+            </span>
+          </div>
+        )}
       </div>
     </div>
   )

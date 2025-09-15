@@ -30,39 +30,25 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchUserData()
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    fetch('https://mrpingu-production.up.railway.app/user/courses', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+      .then(res => res.json())
+      .then(data => {
+        let enrolledArr = Array.isArray(data) ? data : [];
+        enrolledArr = enrolledArr.map(course => ({
+          ...course,
+          id: course.course_id
+        }));
+        setEnrolledCourses(enrolledArr);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, [])
-
-  const fetchUserData = async () => {
-    try {
-      const [coursesResponse] = await Promise.all([
-        userAPI.getEnrolledCourses(),
-      ])
-
-      setEnrolledCourses(coursesResponse.data || [])
-
-      // Use real user data from backend
-      setUserStats({
-        totalPoints: user?.xp || 0,
-        level: user?.rank || 1,
-        completedLessons: 0, // This would need to be calculated from user lessons
-        streak: user?.strike || 0,
-        rank: 0 // This would need to be calculated from leaderboard
-      })
-    } catch (error) {
-      console.error('Error fetching user data:', error)
-      // Fallback to user data if API fails
-      setUserStats({
-        totalPoints: user?.xp || 0,
-        level: user?.rank || 1,
-        completedLessons: 0,
-        streak: user?.strike || 0,
-        rank: 0
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const calculateProgress = (course) => {
     // Mock progress calculation

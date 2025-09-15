@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { lessonAPI, userAPI, courseAPI } from '../services/api'
 import SummaryModal from '../components/SummaryModal'
 import SummaryViewer from '../components/SummaryViewer'
+import QuizzesPage from './QuizPage'
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -37,10 +38,53 @@ const LessonPage = () => {
   const [videoPlaying, setVideoPlaying] = useState(false)
   const [videoMuted, setVideoMuted] = useState(false)
   const [activeTab, setActiveTab] = useState('content')
+  const [completed, setCompleted] = useState(false)
+  const [lessons, setLessons] = useState([])
+  const [completedLessons, setCompletedLessons] = useState([])
+  const [showQuizzes, setShowQuizzes] = useState(false)
 
   useEffect(() => {
-    fetchLessonData()
+    setLoading(true);
+    fetch(`https://mrpingu-production.up.railway.app/lesson/${lessonId}`)
+      .then(res => res.json())
+      .then(setLesson)
+      .catch(console.error);
+
+    fetch(`https://mrpingu-production.up.railway.app/course/${courseId}`)
+      .then(res => res.json())
+      .then(setCourse)
+      .catch(console.error);
+
+    fetch(`https://mrpingu-production.up.railway.app/lesson?course_id=${courseId}`)
+      .then(res => res.json())
+      .then(setAllLessons)
+      .catch(console.error);
+
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetch(`https://mrpingu-production.up.railway.app/user/lessons/${lessonId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+        .then(res => res.json())
+        .then(setUserLesson)
+        .catch(console.error);
+    }
+    setLoading(false);
   }, [courseId, lessonId])
+
+  useEffect(() => {
+    fetch(`https://mrpingu-production.up.railway.app/lesson?course_id=${courseId}`)
+      .then(res => res.json())
+      .then(setLessons)
+      .catch(console.error);
+
+    fetch('https://mrpingu-production.up.railway.app/user/lessons')
+      .then(res => res.json())
+      .then(setCompletedLessons)
+      .catch(console.error);
+  }, [courseId]);
 
   const fetchLessonData = async () => {
     try {
@@ -82,6 +126,11 @@ const LessonPage = () => {
       }
       await userAPI.updateUserLesson(lessonId, { completed: true })
       setUserLesson({ ...userLesson, completed: true })
+      setCompleted(true)
+
+      // Award 10 points for lesson completion
+      // Assuming setUserPoints is available in this scope
+      setUserPoints(prev => prev + 10)
 
       // Navigate to quiz if available
       navigate(`/course/${courseId}/lesson/${lessonId}/quiz`)
@@ -125,6 +174,21 @@ const LessonPage = () => {
   const getPreviousLesson = () => {
     const currentIndex = getCurrentLessonIndex()
     return currentIndex > 0 ? allLessons[currentIndex - 1] : null
+  }
+
+  function completeLesson(lessonId, xp) {
+    fetch(`https://mrpingu-production.up.railway.app/user/lessons/${lessonId}`, { method: 'POST' })
+      .then(res => res.json())
+      .then(() => {
+        setCompletedLessons(prev => [...prev, { id: lessonId }]);
+        // Add points logic here, e.g. update user points state
+        if (lessons.length === completedLessons.length + 1) setShowQuizzes(true);
+      })
+      .catch(console.error);
+  }
+
+  function isCompleted(lessonId) {
+    return Array.isArray(completedLessons) && completedLessons.some(l => l.id === lessonId);
   }
 
   if (loading) {
@@ -430,6 +494,9 @@ const LessonPage = () => {
             </div>
           </div>
         )}
+
+        {/* Quizzes Page */}
+        {showQuizzes && <QuizzesPage courseId={courseId} />}
       </div>
     </div>
   )

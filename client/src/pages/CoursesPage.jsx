@@ -16,77 +16,108 @@ import {
   Trophy,
   CheckCircle
 } from 'lucide-react'
+import LessonsPage from './LessonPage';
 
-const CoursesPage = () => {
-  const [courses, setCourses] = useState([])
-  const [enrolledCourses, setEnrolledCourses] = useState([])
+function CoursesPage() {
+  const [courses, setCourses] = useState([]);
+  const [enrolledCourses, setEnrolledCourses] = useState([]);
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [viewMode, setViewMode] = useState('grid')
   const [filterOpen, setFilterOpen] = useState(false)
+  const [selectedCourseId, setSelectedCourseId] = useState(null);
 
   const categories = [
     { value: 'all', label: 'All Courses' },
-    { value: 'Frontend', label: 'Frontend' },
-    { value: 'Backend', label: 'Backend' },
-    { value: 'Mobile', label: 'Mobile Development' },
-    { value: 'DevOps', label: 'DevOps' },
+    { value: 'Programming', label: 'Programming' },
     { value: 'Data Science', label: 'Data Science' },
-    { value: 'AI/ML', label: 'AI/ML' }
+    { value: 'Security', label: 'Security' },
+    { value: 'Web Development', label: 'Web Development' },
+    { value: 'Database', label: 'Database' },
+    { value: 'Backend Development', label: 'Backend Development' },
+    { value: 'Design', label: 'Design' },
+    { value: 'DevOps', label: 'DevOps' },
+    { value: 'Mobile Development', label: 'Mobile Development' },
+    { value: 'Artificial Intelligence', label: 'Artificial Intelligence' }
+
   ]
 
   useEffect(() => {
-    fetchCourses()
-    fetchEnrolledCourses()
-  }, [])
+    fetch('https://mrpingu-production.up.railway.app/course')
+      .then(res => res.json())
+      .then(data => {
+        let coursesArr = Array.isArray(data) ? data : (Array.isArray(data.courses) ? data.courses : []);
+        coursesArr = coursesArr.map(course => ({
+          ...course,
+          id: course.course_id
+        }));
+        setCourses(coursesArr);
+        setLoading(false);
+      })
+      .catch(error => {
+        setLoading(false);
+        console.error(error);
+      });
 
-  const fetchCourses = async () => {
-    try {
-      const response = await courseAPI.getCourses()
-      console.log('API Response:', response)
-      console.log('Response data:', response.data)
-      console.log('Type of response.data:', typeof response.data)
-      console.log('Is array:', Array.isArray(response.data))
-
-      // Ensure we always set an array
-      if (Array.isArray(response.data)) {
-        setCourses(response.data)
-      } else if (response.data && Array.isArray(response.data.courses)) {
-        setCourses(response.data.courses)
-      } else {
-        console.warn('API did not return an array, setting empty array')
-        setCourses([])
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return;
+    }
+    fetch('https://mrpingu-production.up.railway.app/user/courses', {
+      headers: {
+        'Authorization': `Bearer ${token}`
       }
-    } catch (error) {
-      console.error('Error fetching courses:', error)
-      setCourses([])
-    } finally {
-      setLoading(false)
-    }
+    })
+      .then(res => {
+        if (res.status === 401) {
+          return [];
+        }
+        return res.json();
+      })
+      .then(data => {
+        let enrolledArr = Array.isArray(data) ? data : [];
+        enrolledArr = enrolledArr.map(course => ({
+          ...course,
+          id: course.course_id
+        }));
+        setEnrolledCourses(enrolledArr);
+      })
+      .catch(console.error);
+
+  }, []);
+
+  function enrollCourse(courseId) {
+    const token = localStorage.getItem('token');
+    fetch(`https://mrpingu-production.up.railway.app/user/courses/${courseId}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+      .then(res => res.json())
+      .then(() => {
+        fetch('https://mrpingu-production.up.railway.app/user/courses', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+          .then(res => res.json())
+          .then(data => {
+            let enrolledArr = Array.isArray(data) ? data : [];
+            enrolledArr = enrolledArr.map(course => ({
+              ...course,
+              id: course.course_id
+            }));
+            setEnrolledCourses(enrolledArr);
+          });
+        setSelectedCourseId(courseId);
+      })
+      .catch(console.error);
   }
 
-  const fetchEnrolledCourses = async () => {
-    try {
-      const response = await userAPI.getEnrolledCourses()
-      setEnrolledCourses(response.data || [])
-    } catch (error) {
-      console.error('Error fetching enrolled courses:', error)
-      setEnrolledCourses([])
-    }
-  }
-
-  const handleEnroll = async (courseId) => {
-    try {
-      await userAPI.enrollInCourse(courseId)
-      setEnrolledCourses([...enrolledCourses, { id: courseId }])
-    } catch (error) {
-      console.error('Error enrolling in course:', error)
-    }
-  }
-
-  const isEnrolled = (courseId) => {
-    return enrolledCourses.some(course => course.id === courseId)
+  function isEnrolled(courseId) {
+    return Array.isArray(enrolledCourses) && enrolledCourses.some(c => c.id === courseId);
   }
 
   // Ensure courses is always an array before filtering
@@ -253,20 +284,12 @@ const CoursesPage = () => {
                       Continue Learning
                     </Link>
                   ) : (
-                    <>
-                      <button
-                        onClick={() => handleEnroll(course.id)}
-                        className="btn btn-primary flex-1"
-                      >
-                        {course.price === 0 ? 'Enroll Free' : `Enroll (${course.price} points)`}
-                      </button>
-                      <Link
-                        to={`/course/${course.id}`}
-                        className="btn btn-secondary"
-                      >
-                        Preview
-                      </Link>
-                    </>
+                    <button
+                      onClick={() => enrollCourse(course.id)}
+                      className="btn btn-primary flex-1"
+                    >
+                      Enroll
+                    </button>
                   )}
                 </div>
               </div>
@@ -281,9 +304,11 @@ const CoursesPage = () => {
             <p className="text-gray-600">Try adjusting your search or filter criteria</p>
           </div>
         )}
+        {selectedCourseId && <LessonsPage courseId={selectedCourseId} />}
       </div>
     </div>
   )
 }
 
 export default CoursesPage
+

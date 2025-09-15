@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_BASE_URL = 'http://localhost:3000'
+const API_BASE_URL = 'https://mrpingu-production.up.railway.app'
 
 // Create axios instance with default config
 const api = axios.create({
@@ -10,6 +10,18 @@ const api = axios.create({
   },
   withCredentials: true, // Important for cookie-based auth
 })
+
+// Request interceptor to add Authorization header
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 // Response interceptor to handle errors
 api.interceptors.response.use(

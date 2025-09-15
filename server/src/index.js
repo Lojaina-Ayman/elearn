@@ -19,7 +19,7 @@ const { checkUser } = require("../middleware/auth.middleware");
 const { checkAdmin } = require("../middleware/auth.middleware");
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:5174', // Your frontend URL
+  origin: 'http://localhost:5173', // Your frontend URL
   credentials: true, // Allow cookies to be sent
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']

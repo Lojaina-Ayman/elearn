@@ -18,8 +18,8 @@ import {
   Coins
 } from 'lucide-react'
 
-const CoursePage = () => {
-  const { courseId } = useParams()
+function CoursePage() {
+  const { id } = useParams()
   const navigate = useNavigate()
   const [course, setCourse] = useState(null)
   const [lessons, setLessons] = useState([])
@@ -29,45 +29,37 @@ const CoursePage = () => {
   const [isEnrolled, setIsEnrolled] = useState(false)
 
   useEffect(() => {
-    fetchCourseData()
-  }, [courseId])
+    setLoading(true);
+    fetch(`https://mrpingu-production.up.railway.app/course/${id}`)
+      .then(res => res.json())
+      .then(data => {
+        setCourse(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
 
-  const fetchCourseData = async () => {
-    try {
-      const [courseResponse, lessonsResponse, userLessonsResponse, enrolledCoursesResponse] = await Promise.all([
-        courseAPI.getCourse(courseId),
-        lessonAPI.getLessons(),
-        userAPI.getUserLessons(),
-        userAPI.getEnrolledCourses()
-      ])
+    fetch(`https://mrpingu-production.up.railway.app/lesson?course_id=${id}`)
+      .then(res => res.json())
+      .then(setLessons)
+      .catch(console.error);
 
-      setCourse(courseResponse.data)
-
-      // Filter lessons for this course
-      const courseLessons = lessonsResponse.data?.filter(lesson => lesson.course_id === courseId) || []
-      setLessons(courseLessons)
-
-      setUserLessons(userLessonsResponse.data || [])
-
-      // Check if user is enrolled
-      const enrolled = enrolledCoursesResponse.data?.some(enrolledCourse => enrolledCourse.id === courseId)
-      setIsEnrolled(enrolled)
-
-    } catch (error) {
-      console.error('Error fetching course data:', error)
-      setCourse(null)
-      setLessons([])
-      setUserLessons([])
-      setIsEnrolled(false)
-    } finally {
-      setLoading(false)
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetch('https://mrpingu-production.up.railway.app/user/lessons', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+        .then(res => res.json())
+        .then(setUserLessons)
+        .catch(console.error);
     }
-  }
+  }, [id])
 
   const handleEnroll = async () => {
     setEnrolling(true)
     try {
-      await userAPI.enrollInCourse(courseId)
+      await userAPI.enrollInCourse(id)
       setIsEnrolled(true)
     } catch (error) {
       console.error('Error enrolling in course:', error)
@@ -261,7 +253,7 @@ const CoursePage = () => {
                         <div className="flex items-center space-x-2">
                           {isEnrolled && unlocked && (
                             <Link
-                              to={`/course/${courseId}/lesson/${lesson.id}`}
+                              to={`/course/${id}/lesson/${lesson.id}`}
                               className={`btn text-sm ${completed ? 'btn-success' : 'btn-primary'}`}
                             >
                               {completed ? (

@@ -1,7 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { Eye, EyeOff, BookOpen, Trophy, Star } from 'lucide-react'
+import { Eye, EyeOff, BookOpen } from 'lucide-react'
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -14,6 +14,11 @@ const LoginPage = () => {
 
   const { login } = useAuth()
   const navigate = useNavigate()
+  const emailInputRef = useRef(null)
+
+  useEffect(() => {
+    emailInputRef.current?.focus()
+  }, [])
 
   const handleChange = (e) => {
     setFormData({
@@ -28,6 +33,12 @@ const LoginPage = () => {
     setLoading(true)
     setError('')
 
+    if (!formData.email || !formData.password) {
+      setError('Please enter both email and password')
+      setLoading(false)
+      return
+    }
+
     const result = await login(formData.email, formData.password)
 
     if (result.success) {
@@ -37,6 +48,12 @@ const LoginPage = () => {
     }
 
     setLoading(false)
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleSubmit(e)
+    }
   }
 
   return (
@@ -49,29 +66,7 @@ const LoginPage = () => {
             <h1 className="text-3xl font-bold text-gray-900">LearnHub</h1>
           </div>
           <h2 className="text-2xl font-semibold text-gray-700">Welcome back!</h2>
-          <p className="text-gray-600 mt-2">Continue your learning journey</p>
-        </div>
-
-        {/* Features showcase */}
-        <div className="grid grid-cols-3 gap-4 py-6">
-          <div className="text-center">
-            <div className="bg-white rounded-full p-3 mx-auto w-fit shadow-sm">
-              <Trophy className="h-6 w-6 text-warning-500" />
-            </div>
-            <p className="text-sm text-gray-600 mt-2">Earn Points</p>
-          </div>
-          <div className="text-center">
-            <div className="bg-white rounded-full p-3 mx-auto w-fit shadow-sm">
-              <Star className="h-6 w-6 text-success-500" />
-            </div>
-            <p className="text-sm text-gray-600 mt-2">Level Up</p>
-          </div>
-          <div className="text-center">
-            <div className="bg-white rounded-full p-3 mx-auto w-fit shadow-sm">
-              <BookOpen className="h-6 w-6 text-primary-500" />
-            </div>
-            <p className="text-sm text-gray-600 mt-2">Learn Skills</p>
-          </div>
+          <p className="text-gray-600 mt-2">Sign in to continue learning</p>
         </div>
 
         {/* Login Form */}
@@ -88,6 +83,7 @@ const LoginPage = () => {
                 Email Address
               </label>
               <input
+                ref={emailInputRef}
                 id="email"
                 name="email"
                 type="email"
@@ -96,6 +92,8 @@ const LoginPage = () => {
                 placeholder="Enter your email"
                 value={formData.email}
                 onChange={handleChange}
+                onKeyDown={handleKeyDown}
+                autoComplete="username"
               />
             </div>
 
@@ -113,11 +111,14 @@ const LoginPage = () => {
                   placeholder="Enter your password"
                   value={formData.password}
                   onChange={handleChange}
+                  onKeyDown={handleKeyDown}
+                  autoComplete="current-password"
                 />
                 <button
                   type="button"
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
+                  tabIndex={-1}
                 >
                   {showPassword ? (
                     <EyeOff className="h-5 w-5 text-gray-400" />
@@ -154,11 +155,9 @@ const LoginPage = () => {
           </div>
         </div>
 
-
-
         {/* Footer */}
         <div className="text-center text-sm text-gray-500">
-          <p>Start learning today and unlock your potential!</p>
+          <p>Welcome back to your learning journey!</p>
         </div>
       </div>
     </div>

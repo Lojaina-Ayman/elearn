@@ -39,8 +39,10 @@ export const AuthProvider = ({ children }) => {
 
       if (response.data.success) {
         const userData = response.data.user
-
-        // Store user data in localStorage (JWT is stored in httpOnly cookie by backend)
+        // If backend returns a token, store it
+        if (response.data.token) {
+          localStorage.setItem('token', response.data.token)
+        }
         localStorage.setItem('user', JSON.stringify(userData))
 
         setUser(userData)
@@ -68,8 +70,9 @@ export const AuthProvider = ({ children }) => {
 
       if (response.data.success) {
         const newUser = response.data.user
-
-        // Store user data in localStorage (JWT is stored in httpOnly cookie by backend)
+        if (response.data.token) {
+          localStorage.setItem('token', response.data.token)
+        }
         localStorage.setItem('user', JSON.stringify(newUser))
 
         setUser(newUser)
