@@ -1,20 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { userAPI, courseAPI } from '../services/api'
 import { 
-  BookOpen, 
-  Trophy, 
-  Star, 
-  Coins, 
-  Play, 
-  Clock, 
-  Target,
-  TrendingUp,
-  Award,
-  ChevronRight,
-  Calendar,
-  Users
+  BookOpen, Trophy, Star, Coins, Play, Clock, Target,
+  TrendingUp, Award, ChevronRight, Calendar, Users
 } from 'lucide-react'
 
 const HomePage = () => {
@@ -28,27 +17,36 @@ const HomePage = () => {
     rank: 0
   })
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
+    if (!user) {
+      setLoading(false)
+      setError('You are not logged in.')
+      return
+    }
+    const token = localStorage.getItem('token')
     fetch('https://mrpingu-production.up.railway.app/user/courses', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
+      headers: { 'Authorization': `Bearer ${token}` }
     })
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch courses')
+        return res.json()
+      })
       .then(data => {
-        let enrolledArr = Array.isArray(data) ? data : [];
+        let enrolledArr = Array.isArray(data) ? data : []
         enrolledArr = enrolledArr.map(course => ({
           ...course,
           id: course.course_id
-        }));
-        setEnrolledCourses(enrolledArr);
-        setLoading(false);
+        }))
+        setEnrolledCourses(enrolledArr)
+        setLoading(false)
       })
-      .catch(() => setLoading(false));
-  }, [])
+      .catch(() => {
+        setError('')
+        setLoading(false)
+      })
+  }, [user])
 
   const calculateProgress = (course) => {
     // Mock progress calculation
@@ -70,13 +68,24 @@ const HomePage = () => {
     )
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <BookOpen className="h-12 w-12 text-gray-400 mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Error</h3>
+        <p className="text-gray-600 mb-4">{error}</p>
+        <Link to="/login" className="btn btn-primary">Login</Link>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {getGreeting()}, {user?.fullname?.split(' ')[0]}! 👋
+            {getGreeting()}, {user?.fullname?.split(' ')[0] || 'Learner'}! 👋
           </h1>
           <p className="text-gray-600">Ready to continue your learning journey?</p>
         </div>
